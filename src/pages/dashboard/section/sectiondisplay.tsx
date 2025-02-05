@@ -82,7 +82,7 @@ const SectionTabledisplay = () => {
 
           // Process each set of section data (up to 4 sets per row)
           for (let i = 1; i <= 10; i += 1) {
-            if (row[`Section name_${i}`] && row[`Section name_${i}`] !== '-') {
+            if (row[`Section name_${i}`] && row[`Section name_${i}`] !== '_' && row[`semester_${i}`]!='_' && row[`subject code_${i}`] ) {
               sections.push(row[`Section name_${i}`]);
               semesters.push(Number(row[`semester_${i}`]));
               courseCodes.push(row[`subject code_${i}`]);
