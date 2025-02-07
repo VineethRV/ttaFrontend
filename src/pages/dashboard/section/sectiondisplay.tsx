@@ -16,8 +16,7 @@ const SectionTabledisplay = () => {
   console.log("bob")
   useEffect(() => {
 
-    axios
-      .get(BACKEND_URL + "/sections", {
+    axios.get(BACKEND_URL + "/sections", {
         headers: {
           authorization: localStorage.getItem("token"),
         },
@@ -76,19 +75,27 @@ const SectionTabledisplay = () => {
         console.log(parsedData);
 
         const data = parsedData.map((row: any) => {
+          console.log("row",row)
           const sections = [];
           const semesters = [];
           const courseCodes = [];
 
           // Process each set of section data (up to 4 sets per row)
+          if(row[`Section name`] && row[`semester`] && row[`subject code`]){
+            sections.push(row[`Section name`]);
+            semesters.push(Number(row[`semester`]));
+            courseCodes.push(row[`subject code`]);
+          }
           for (let i = 1; i <= 10; i += 1) {
-            if (row[`Section name_${i}`] && row[`Section name_${i}`] !== '-') {
+            if (row[`Section name_${i}`] && row[`semester_${i}`] && row[`subject code_${i}`]) {
               sections.push(row[`Section name_${i}`]);
               semesters.push(Number(row[`semester_${i}`]));
               courseCodes.push(row[`subject code_${i}`]);
             }
           }
-
+          console.log("sections",sections)
+          console.log("semesters",semesters)
+          console.log("courseCodes",courseCodes,"\n\n")
           return {
             teacherInitials: row['Teacher initials'],
             sections,
@@ -96,8 +103,10 @@ const SectionTabledisplay = () => {
             courseCodes
           };
         });
-
+        console.log("data",data)
         try {
+          toast.loading("Importing sections...");
+          setLoading(true);
           const response = await axios.post(
             `${BACKEND_URL}/createTempTable`,
             { data },
@@ -110,6 +119,25 @@ const SectionTabledisplay = () => {
           );
 
           if (response.data.status === statusCodes.OK) {
+            await axios.get(BACKEND_URL + "/sections", {
+              headers: {
+                authorization: localStorage.getItem("token"),
+              },
+              params: {
+                semester: Number(localStorage.getItem("semester")),
+              },
+            })
+            .then((res) => {
+              const status = res.data.status;
+              console.log(res.data.message);
+              if (status == statusCodes.OK) {
+                setCoreData(res.data.message);
+              } else {
+                toast.error("Server error !!");
+              }
+              setLoading(false);
+            });
+            toast.dismiss();
             toast.success("Sections imported successfully!");
           } else {
             throw new Error();
